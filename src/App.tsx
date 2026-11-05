@@ -1,183 +1,260 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
+  ArrowDownRight,
   ArrowUpRight,
+  Asterisk,
+  Braces,
   Check,
-  ChevronRight,
-  CircleCheck,
   Code2,
-  ExternalLink,
-  Figma,
-  Globe2,
-  MapPin,
+  Layers3,
   Menu,
-  Monitor,
-  Server,
-  Sparkles,
+  Palette,
+  Search,
+  Send,
+  Workflow,
   X,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
-type Project = {
-  id: number;
-  title: string;
-  eyebrow: string;
-  description: string;
-  image: string;
-  tags: string[];
-  skills: string[];
-  result: string;
-  accent: string;
-};
-
-const projects: Project[] = [
+const services = [
   {
-    id: 1,
-    title: 'Sistema editorial modular',
-    eyebrow: 'Maquetación · UI',
-    description: 'Una experiencia de lectura flexible, con jerarquía visual clara y componentes preparados para crecer.',
-    image: 'https://images.pexels.com/photos/68763/pexels-photo-68763.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    tags: ['Layout responsive', 'Design system'],
-    skills: ['HTML semántico', 'CSS responsive', 'Componentes reutilizables'],
-    result: 'Arquitectura visual consistente en desktop, tablet y móvil.',
-    accent: 'mint',
+    number: '01',
+    title: 'Estrategia & producto',
+    description: 'Definición de problemas, objetivos, alcance y oportunidades. Una dirección clara antes de invertir en ejecución.',
+    items: ['Discovery y definición', 'Estrategia digital', 'Arquitectura de producto'],
+    icon: Layers3,
   },
   {
-    id: 2,
-    title: 'Producto digital, sin fricción',
-    eyebrow: 'UX/UI · Prototipado',
-    description: 'Flujos simples para convertir una tarea compleja en una secuencia intuitiva y fácil de entender.',
-    image: 'https://images.pexels.com/photos/20870806/pexels-photo-20870806.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    tags: ['UX research', 'Prototipo UI'],
-    skills: ['User flows', 'Wireframes', 'Microinteracciones'],
-    result: 'Menos decisiones por pantalla, más claridad en cada acción.',
-    accent: 'peach',
+    number: '02',
+    title: 'Diseño & comunicación',
+    description: 'Identidades e interfaces que ordenan el mensaje, construyen reconocimiento y hacen más simple cada interacción.',
+    items: ['Branding e identidad visual', 'UX/UI y design systems', 'Campañas y contenido digital'],
+    icon: Palette,
   },
   {
-    id: 3,
-    title: 'Presencia local que convierte',
-    eyebrow: 'SEO local · GEO',
-    description: 'Una vidriera digital diseñada para que una marca de barrio sea encontrada, entendida y elegida.',
-    image: 'https://images.pexels.com/photos/37797929/pexels-photo-37797929.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    tags: ['SEO local', 'Google Business'],
-    skills: ['Arquitectura SEO', 'Contenido geolocalizado', 'Datos estructurados'],
-    result: 'Más señales de relevancia local y recorridos de contacto más directos.',
-    accent: 'blue',
+    number: '03',
+    title: 'Desarrollo & tecnología',
+    description: 'Soluciones web conectadas con la operación real: desde una landing hasta herramientas y plataformas a medida.',
+    items: ['Sitios y landing pages', 'Dashboards y plataformas', 'APIs e integraciones'],
+    icon: Braces,
   },
   {
-    id: 4,
-    title: 'Backoffice que ordena',
-    eyebrow: 'Backend · Integración',
-    description: 'Interfaces operativas que conectan formularios, datos y estados sin perder legibilidad.',
-    image: 'https://images.pexels.com/photos/907489/pexels-photo-907489.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    tags: ['API integration', 'Dashboard'],
-    skills: ['Integración de datos', 'Estados de carga', 'Validación de formularios'],
-    result: 'Una vista de trabajo que hace visible el estado real de cada operación.',
-    accent: 'lime',
+    number: '04',
+    title: 'Marketing & crecimiento',
+    description: 'Visibilidad, medición y mejora continua para conectar la experiencia digital con objetivos concretos.',
+    items: ['SEO local y GEO', 'Analítica y conversión', 'Contenido y campañas'],
+    icon: Search,
   },
   {
-    id: 5,
-    title: 'De local a publicado',
-    eyebrow: 'Hosting · Entrega',
-    description: 'Un flujo de entrega pensado para que el diseño llegue a producción rápido, estable y con criterio.',
-    image: 'https://images.pexels.com/photos/17771078/pexels-photo-17771078.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
-    tags: ['Deploy', 'Performance'],
-    skills: ['Configuración de hosting', 'Dominio y SSL', 'Checklist de publicación'],
-    result: 'Implementación lista para publicar, medir y mantener.',
-    accent: 'yellow',
+    number: '05',
+    title: 'Automatización & evolución',
+    description: 'Menos tareas repetitivas y más continuidad: procesos conectados, publicación y soporte técnico.',
+    items: ['Automatizaciones y workflows', 'Hosting y publicación', 'Mantenimiento y optimización'],
+    icon: Workflow,
   },
 ];
 
-const filters = ['Todos', 'Maquetación', 'UX/UI', 'Backend', 'SEO local', 'Hosting'];
+const steps = [
+  ['01', 'Entender', 'Alineamos contexto, problema, usuarios y objetivos. Definimos qué vale la pena resolver y cómo medirlo.'],
+  ['02', 'Diseñar', 'Traducimos la estrategia en una experiencia, un sistema visual y un plan de implementación claro.'],
+  ['03', 'Construir', 'Desarrollamos, integramos y probamos cada parte. Diseño y tecnología trabajan sobre el mismo objetivo.'],
+  ['04', 'Evolucionar', 'Publicamos, medimos y priorizamos mejoras. El trabajo no termina cuando el proyecto sale online.'],
+];
 
 function App() {
-  const [activeFilter, setActiveFilter] = useState('Todos');
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
   const [formError, setFormError] = useState('');
-
-  const visibleProjects = useMemo(() => {
-    if (activeFilter === 'Todos') return projects;
-    return projects.filter((project) => project.eyebrow.toLowerCase().includes(activeFilter.toLowerCase()) || project.tags.some((tag) => tag.toLowerCase().includes(activeFilter.toLowerCase())));
-  }, [activeFilter]);
+  const [fallbackMailto, setFallbackMailto] = useState('');
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    // Honeypot: silently discard automated submissions.
+    if (String(formData.get('company_website') ?? '').trim()) {
+      setSubmitted(true);
+      return;
+    }
+
     setSending(true);
     setFormError('');
-    const formData = new FormData(event.currentTarget);
+    setFallbackMailto('');
     const inquiry = {
       name: String(formData.get('name') ?? '').trim(),
       email: String(formData.get('email') ?? '').trim(),
       message: String(formData.get('message') ?? '').trim(),
     };
-    const { error } = await supabase.from('portfolio_inquiries').insert(inquiry);
-    setSending(false);
-    if (error) {
-      setFormError('No pudimos enviar el mensaje. Revisá los datos e intentá nuevamente.');
-      return;
+
+    const mailto = 'mailto:grasso.luis@gmail.com?subject=' + encodeURIComponent('Consulta desde Pop Negro') + '&body=' + encodeURIComponent('Nombre: ' + inquiry.name + '\nEmail: ' + inquiry.email + '\n\n' + inquiry.message);
+
+    try {
+      if (!supabase) {
+        setFormError('Este entorno todavía no tiene el formulario conectado. Podés enviar la consulta directamente por email.');
+        setFallbackMailto(mailto);
+        return;
+      }
+      const { error } = await supabase.from('portfolio_inquiries').insert(inquiry);
+      if (error) throw error;
+      setSubmitted(true);
+      form.reset();
+    } catch {
+      setFormError('No pudimos registrar el mensaje. Podés continuar por email.');
+      setFallbackMailto(mailto);
+    } finally {
+      setSending(false);
     }
-    setSubmitted(true);
-    event.currentTarget.reset();
   }
+
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <div className="site-shell">
       <header className="topbar">
-        <a className="brand" href="#top" aria-label="Nave portfolio, inicio">
-          <span className="brand-mark">N</span>
-          <span>NAVE<span className="brand-dot">.</span></span>
+        <a className="brand" href="#inicio" aria-label="Pop Negro, inicio">
+          <span className="brand-mark" aria-hidden="true"><Asterisk size={25} strokeWidth={2.5} /></span>
+          <span className="brand-name">POP NEGRO</span>
         </a>
-        <button className="menu-toggle" onClick={() => setMenuOpen((open) => !open)} aria-label="Abrir menú">
-          {menuOpen ? <X size={21} /> : <Menu size={21} />}
+        <button
+          className="menu-toggle"
+          type="button"
+          onClick={() => setMenuOpen((open) => !open)}
+          aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
+          aria-expanded={menuOpen}
+          aria-controls="main-navigation"
+        >
+          {menuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
-        <nav className={menuOpen ? 'main-nav is-open' : 'main-nav'}>
-          <a href="#work" onClick={() => setMenuOpen(false)}>Proyectos</a>
-          <a href="#process" onClick={() => setMenuOpen(false)}>Cómo trabajo</a>
-          <a href="#contact" className="nav-cta" onClick={() => setMenuOpen(false)}>Hablemos <ArrowUpRight size={16} /></a>
+        <nav id="main-navigation" className={menuOpen ? 'main-nav is-open' : 'main-nav'} aria-label="Navegación principal">
+          <a href="#servicios" onClick={closeMenu}>Servicios</a>
+          <a href="#metodo" onClick={closeMenu}>Método</a>
+          <a href="#perfil" onClick={closeMenu}>Quiénes somos</a>
+          <a href="#contacto" className="nav-cta" onClick={closeMenu}>Hablemos <ArrowUpRight size={16} /></a>
         </nav>
       </header>
 
-      <main id="top">
+      <main id="inicio">
         <section className="hero section-wrap">
           <div className="hero-copy">
-            <p className="eyebrow"><span className="eyebrow-line" /> Portfolio de diseño web <span className="eyebrow-date">2026</span></p>
-            <h1>Diseño digital<br /><em>con dirección.</em></h1>
-            <p className="hero-lead">Interfaces que se ven bien, se entienden rápido y funcionan cuando llegan a producción.</p>
+            <p className="eyebrow"><span className="eyebrow-line" /> Estrategia · Diseño · Tecnología</p>
+            <h1>Ideas claras.<br /><em>Soluciones reales.</em></h1>
+            <p className="hero-lead">Construimos experiencias, productos y herramientas digitales conectando negocio, diseño y tecnología.</p>
             <div className="hero-actions">
-              <a className="button button-dark" href="#work">Ver proyectos <ArrowUpRight size={17} /></a>
-              <a className="text-link" href="#contact">Contame tu idea <ChevronRight size={17} /></a>
+              <a className="button button-dark" href="#servicios">Explorar servicios <ArrowUpRight size={17} /></a>
+              <a className="text-link" href="#contacto">Contar un proyecto <ArrowDownRight size={17} /></a>
             </div>
+            <p className="hero-location">Mendoza, Argentina <span>—</span> Trabajo remoto</p>
           </div>
-          <div className="hero-visual">
-            <div className="hero-card hero-card-main">
-              <div className="hero-card-top"><span>SELECTED / 05</span><span>01—05</span></div>
-              <div className="hero-art"><div className="art-orbit orbit-one" /><div className="art-orbit orbit-two" /><div className="art-sun" /><div className="art-word">FORMA<br /><span>Y FUNCIÓN</span></div></div>
-              <div className="hero-card-bottom"><span>Una mirada completa</span><span>↘</span></div>
+          <div className="hero-visual" aria-label="Composición gráfica abstracta de Pop Negro">
+            <div className="hero-visual-top"><span>POP NEGRO / STUDIO</span><span>INDEPENDENT PRACTICE</span></div>
+            <div className="visual-composition">
+              <div className="visual-orbit orbit-a" />
+              <div className="visual-orbit orbit-b" />
+              <div className="visual-disc" />
+              <div className="visual-cross">+</div>
+              <div className="visual-word">MAKE<br /><em>IT</em><br />MATTER<span>.</span></div>
+              <span className="visual-index">DESIGN / BUILD / GROW</span>
             </div>
-            <div className="floating-note"><Sparkles size={15} /><span>Diseño que<br />deja marca.</span></div>
+            <div className="hero-visual-bottom"><span>Una mirada integral</span><span>01—05</span></div>
+            <div className="floating-note"><Asterisk size={17} /><span>Del concepto<br />a lo concreto.</span></div>
           </div>
         </section>
 
-        <section className="trust-strip"><div className="section-wrap trust-inner"><span>Lo que pide la convocatoria</span><div className="trust-items"><span><Monitor size={16} /> Maquetación</span><span><Figma size={16} /> UX / UI</span><span><Globe2 size={16} /> SEO + GEO</span><span><Server size={16} /> Hosting</span></div></div></section>
-
-        <section className="work section-wrap" id="work">
-          <div className="section-heading"><div><p className="eyebrow"><span className="eyebrow-line" /> Selección de trabajo</p><h2>Cinco formas de<br /><em>resolver mejor.</em></h2></div><p className="section-intro">Una selección orientada a los desafíos centrales de la convocatoria: forma, experiencia, integración y llegada real.</p></div>
-          <div className="filter-row" role="tablist" aria-label="Filtrar proyectos">{filters.map((filter) => <button key={filter} className={activeFilter === filter ? 'filter active' : 'filter'} onClick={() => setActiveFilter(filter)}>{filter}</button>)}</div>
-          <div className="projects-grid">{visibleProjects.map((project) => <article className={`project-card accent-${project.accent}`} key={project.id}><button className="project-image" onClick={() => setSelectedProject(project)} aria-label={`Abrir detalle de ${project.title}`}><img src={project.image} alt="" /><span className="image-overlay"><ExternalLink size={19} /></span><span className="project-number">0{project.id}</span></button><div className="project-content"><p className="project-eyebrow">{project.eyebrow}</p><h3>{project.title}</h3><p>{project.description}</p><div className="tag-row">{project.tags.map((tag) => <span key={tag}>{tag}</span>)}</div><button className="project-link" onClick={() => setSelectedProject(project)}>Ver caso <ArrowUpRight size={16} /></button></div></article>)}</div>
+        <section className="capability-strip" aria-label="Áreas de trabajo">
+          <div className="section-wrap capability-inner">
+            <span>Capacidades integradas para cada desafío</span>
+            <div className="capability-items"><span><Palette size={16} /> Diseño</span><span><Code2 size={16} /> Desarrollo</span><span><Search size={16} /> Marketing</span><span><Workflow size={16} /> Automatización</span></div>
+          </div>
         </section>
 
-        <section className="process section-wrap" id="process"><div className="process-intro"><p className="eyebrow"><span className="eyebrow-line" /> Método de trabajo</p><h2>Del primer<br /><em>pixel al deploy.</em></h2><p>El diseño no termina en el archivo. Acompaño cada decisión hasta que la experiencia funciona en el mundo real.</p></div><div className="process-list"><div className="process-step"><span>01</span><div><h3>Entender antes de dibujar</h3><p>Objetivos, audiencias y contenido para tomar decisiones con contexto.</p></div><Check size={18} /></div><div className="process-step"><span>02</span><div><h3>Diseñar para cada pantalla</h3><p>Maquetación responsive, sistemas visuales y estados que se sienten naturales.</p></div><Check size={18} /></div><div className="process-step"><span>03</span><div><h3>Publicar con criterio</h3><p>Integración, SEO técnico, hosting y una última revisión antes de abrir la puerta.</p></div><Check size={18} /></div></div></section>
+        <section className="services section-wrap" id="servicios">
+          <div className="section-heading">
+            <div><p className="eyebrow"><span className="eyebrow-line" /> Qué hacemos</p><h2>Capacidades que<br /><em>se conectan.</em></h2></div>
+            <p className="section-intro">No trabajamos en compartimentos aislados. Sumamos las disciplinas necesarias para resolver el problema completo, con un alcance definido para cada proyecto.</p>
+          </div>
+          <div className="services-grid">
+            {services.map((service) => {
+              const Icon = service.icon;
+              return (
+                <article className="service-card" key={service.number}>
+                  <div className="service-top"><span>{service.number}</span><Icon size={22} strokeWidth={1.5} /></div>
+                  <h3>{service.title}</h3>
+                  <p>{service.description}</p>
+                  <ul>{service.items.map((item) => <li key={item}><Check size={14} />{item}</li>)}</ul>
+                </article>
+              );
+            })}
+          </div>
+        </section>
 
-        <section className="coverage"><div className="section-wrap coverage-grid"><div><p className="eyebrow eyebrow-light"><span className="eyebrow-line" /> Matriz de cobertura</p><h2>Todo lo que<br /><em>hay que cuidar.</em></h2></div><div className="coverage-items"><div><CircleCheck size={19} /><span><b>Visual</b> Maquetación y piezas dentro del sitio.</span></div><div><CircleCheck size={19} /><span><b>Experiencia</b> Interfaces web con enfoque UX/UI.</span></div><div><CircleCheck size={19} /><span><b>Negocio</b> Backend, SEO local y GEO.</span></div><div><CircleCheck size={19} /><span><b>Operación</b> Hosting, dominio y publicación.</span></div></div></div></section>
+        <section className="method" id="metodo">
+          <div className="section-wrap method-grid">
+            <div className="method-intro">
+              <p className="eyebrow eyebrow-light"><span className="eyebrow-line" /> Cómo trabajamos</p>
+              <h2>Del problema<br /><em>a la solución.</em></h2>
+              <p>Cada proyecto necesita una combinación distinta de estrategia, diseño y tecnología. El proceso se adapta al desafío, sin perder claridad ni control.</p>
+              <a className="method-link" href="#contacto">Hablemos de tu proyecto <ArrowUpRight size={16} /></a>
+            </div>
+            <div className="method-list">
+              {steps.map(([number, title, description]) => (
+                <article className="method-step" key={number}>
+                  <span>{number}</span><div><h3>{title}</h3><p>{description}</p></div><ArrowUpRight size={17} />
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
 
-        <section className="contact section-wrap" id="contact"><div className="contact-card"><div className="contact-copy"><p className="eyebrow"><span className="eyebrow-line" /> Próximo proyecto</p><h2>Hagamos algo<br /><em>que importe.</em></h2><p>Si estás buscando una mirada de diseño que entienda el recorrido completo, este es un buen lugar para empezar.</p><div className="contact-meta"><span><MapPin size={16} /> Buenos Aires · Remoto</span><span><Code2 size={16} /> Disponible para proyectos</span></div></div><div className="form-panel">{submitted ? <div className="success-state"><CircleCheck size={36} /><h3>Mensaje recibido.</h3><p>Gracias por escribir. La propuesta quedó registrada y voy a revisar los detalles pronto.</p><button className="button button-dark" onClick={() => setSubmitted(false)}>Enviar otro mensaje</button></div> : <form onSubmit={handleSubmit}><label>Tu nombre<input name="name" required minLength={2} placeholder="¿Cómo te llamás?" /></label><label>Tu email<input name="email" required type="email" placeholder="nombre@empresa.com" /></label><label>Contame brevemente<textarea name="message" required minLength={10} rows={3} placeholder="¿Qué necesitás construir?" /></label>{formError && <p className="form-error">{formError}</p>}<button className="button button-dark form-submit" type="submit" disabled={sending}>{sending ? 'Enviando…' : 'Enviar mensaje'} <ArrowUpRight size={17} /></button></form>}</div></div></section>
+        <section className="profile section-wrap" id="perfil">
+          <div className="profile-stamp"><Asterisk size={38} /><span>POP<br />NEGRO</span></div>
+          <div className="profile-copy">
+            <p className="eyebrow"><span className="eyebrow-line" /> Dirección y experiencia</p>
+            <h2>Una visión amplia.<br /><em>Manos en el trabajo.</em></h2>
+            <p>Pop Negro es la identidad de trabajo de Luis Grasso: una trayectoria que cruza diseño gráfico, branding, comunicación, UX/UI, desarrollo web y marketing digital.</p>
+            <p>Más de 15 años de experiencia en agencias, startups y proyectos independientes. Un perfil creativo y técnico para pensar, diseñar y llevar soluciones a producción.</p>
+            <div className="profile-facts"><span><b>15+</b> años de experiencia</span><span><b>360°</b> mirada integral</span><span><b>AR</b> base en Mendoza</span></div>
+            <a className="text-link profile-link" href="https://www.linkedin.com/in/luis-grasso" target="_blank" rel="noreferrer">Conocer trayectoria <ArrowUpRight size={16} /></a>
+          </div>
+        </section>
+
+        <section className="contact section-wrap" id="contacto">
+          <div className="contact-card">
+            <div className="contact-copy">
+              <p className="eyebrow"><span className="eyebrow-line" /> Próximo paso</p>
+              <h2>¿Qué necesitás<br /><em>hacer posible?</em></h2>
+              <p>Contanos en qué estás trabajando. Revisamos el contexto y definimos cómo podemos ayudarte.</p>
+              <div className="contact-details">
+                <a href="mailto:grasso.luis@gmail.com">grasso.luis@gmail.com <ArrowUpRight size={15} /></a>
+                <span>Mendoza, Argentina · Remoto</span>
+              </div>
+            </div>
+            <div className="form-panel">
+              {submitted ? (
+                <div className="success-state"><Send size={34} /><h3>Mensaje recibido.</h3><p>Gracias por contactar a Pop Negro. Vamos a revisar tu consulta.</p><button className="button button-dark" onClick={() => setSubmitted(false)}>Enviar otro mensaje</button></div>
+              ) : (
+                <form onSubmit={handleSubmit}>
+                  <label>Tu nombre<input name="name" required minLength={2} maxLength={120} autoComplete="name" placeholder="¿Cómo te llamás?" /></label>
+                  <label>Tu email<input name="email" required type="email" maxLength={254} autoComplete="email" placeholder="nombre@empresa.com" /></label>
+                  <label>¿Qué necesitás resolver?<textarea name="message" required minLength={10} maxLength={2000} rows={3} placeholder="Contanos brevemente sobre tu proyecto." /></label>
+                  <div className="honeypot" aria-hidden="true"><label htmlFor="company_website">No completar</label><input id="company_website" name="company_website" tabIndex={-1} autoComplete="off" /></div>
+                  {formError && <div className="form-error" role="alert"><p>{formError}</p>{fallbackMailto && <a href={fallbackMailto}>Enviar consulta por email <ArrowUpRight size={14} /></a>}</div>}
+                  <button className="button button-dark form-submit" type="submit" disabled={sending}>{sending ? 'Enviando…' : 'Enviar consulta'} <ArrowUpRight size={17} /></button>
+                  <p className="form-privacy">Usaremos tus datos únicamente para responder esta consulta.</p>
+                </form>
+              )}
+            </div>
+          </div>
+        </section>
       </main>
 
-      <footer className="footer section-wrap"><a className="brand" href="#top"><span className="brand-mark">N</span><span>NAVE<span className="brand-dot">.</span></span></a><p>Diseño web con dirección.</p><span>© 2026</span></footer>
-
-      {selectedProject && <div className="modal-backdrop" role="presentation" onClick={() => setSelectedProject(null)}><div className="project-modal" role="dialog" aria-modal="true" aria-labelledby="project-title" onClick={(event) => event.stopPropagation()}><button className="modal-close" onClick={() => setSelectedProject(null)} aria-label="Cerrar detalle"><X size={20} /></button><img src={selectedProject.image} alt="" /><div className="modal-body"><p className="project-eyebrow">{selectedProject.eyebrow}</p><h2 id="project-title">{selectedProject.title}</h2><p>{selectedProject.description}</p><div className="modal-result"><span>Qué demuestra</span><b>{selectedProject.result}</b></div><ul>{selectedProject.skills.map((skill) => <li key={skill}><CircleCheck size={16} /> {skill}</li>)}</ul><span className="evidence-note">Caso preparado para vincular con repositorio y evidencia de entrega.</span></div></div></div>}
+      <footer className="footer section-wrap">
+        <a className="brand" href="#inicio"><span className="brand-mark"><Asterisk size={23} /></span><span className="brand-name">POP NEGRO</span></a>
+        <p>Estrategia, diseño y tecnología.</p>
+        <a href="https://www.linkedin.com/in/luis-grasso" target="_blank" rel="noreferrer">LinkedIn <ArrowUpRight size={14} /></a>
+        <span>© {new Date().getFullYear()} Pop Negro</span>
+      </footer>
     </div>
   );
 }
